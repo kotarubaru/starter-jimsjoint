@@ -21,7 +21,7 @@ class Orders extends MY_Model {
 			$record->quantity++;
 			$CI->orderitems->update($record);
 		}
-		else{
+		else {
 			$record = $CI->orderitems->create();
 			$record->order = $num;
 			$record->item = $code;
@@ -32,7 +32,19 @@ class Orders extends MY_Model {
 
     // calculate the total for an order
     function total($num) {
-        return 0.0;
+        $this->load->model('Orderitems');
+        $this->load->model('Menu');
+        
+        $CI = & get_instance();
+        $items = $CI->Orderitems->group($num);
+        $result = 0;
+        if (count($items) > 0) {
+            foreach ($items as $item) {
+                $menu = $CI->Menu->get($item->item);
+                $result += $item->quantity * $menu->price;
+            }
+        }
+        return $result;
     }
 
     // retrieve the details for an order
@@ -48,7 +60,17 @@ class Orders extends MY_Model {
     // validate an order
     // it must have at least one item from each category
     function validate($num) {
-        return false;
+        $CI = & get_instance();
+        $items = $CI->orderitems->group($num);
+        $gotem = array();
+        if(count($items) > 0) {
+            foreach($items as $item) {
+                $menu = $CI->menu->get($item->item);
+                $gotem[$menu->category] = 1;
+            }
+        }
+        
+        return isset($gotem['m']) && isset($gotem['d']) && isset($gotem['s']);
     }
 
 }
